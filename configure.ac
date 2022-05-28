@@ -13,8 +13,6 @@ AC_PROG_CC
 # Library Checks
 AC_SEARCH_LIBS([lroundf], [m])
 
-deps_packages="fftw3f"
-
 #   ALSA
 AC_ARG_WITH([alsa], [AS_HELP_STRING([--without-alsa],
             [build without ALSA support])])
@@ -22,7 +20,7 @@ AS_IF([test "x$with_alsa" = "xno"], [
     use_alsa=0
 ], [
     use_alsa=1
-    deps_packages="$deps_packages alsa"
+    PKG_CHECK_MODULES(DEPS, [alsa])
 ])
 AC_DEFINE_UNQUOTED([USE_ALSA], [$use_alsa],
                    [Define to 1 to enable ALSA support])
@@ -34,7 +32,7 @@ AS_IF([test "x$with_pulseaudio" = "xno"], [
     use_pulseaudio=0
 ], [
     use_pulseaudio=1
-    deps_packages="$deps_packages libpulse-simple"
+    PKG_CHECK_MODULES(DEPS, [libpulse-simple])
 ])
 AC_DEFINE_UNQUOTED([USE_PULSEAUDIO], [$use_pulseaudio],
                    [Define to 1 to enable pulseaudio support])
@@ -59,7 +57,7 @@ AS_IF([test "x$with_sndfile" = "xno"], [
     use_sndfile=0
 ], [
     use_sndfile=1
-    deps_packages="$deps_packages sndfile"
+    PKG_CHECK_MODULES(DEPS, [sndfile])
 ])
 AC_DEFINE_UNQUOTED([USE_SNDFILE], [$use_sndfile],
                    [Define to 1 to enable sndfile support])
@@ -95,9 +93,6 @@ option summary:
     stdio          $with_stdio ($use_stdio)
     sndio          $with_sndio ($use_sndio)
 ])
-
-# Checks for libraries.
-PKG_CHECK_MODULES(DEPS, [$deps_packages])
 
 AC_SUBST([auto_find_tests], ['$(sort $(wildcard *.test))'])
 

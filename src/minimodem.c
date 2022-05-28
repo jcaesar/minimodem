@@ -139,6 +139,14 @@ static void fsk_transmit_stdin(
     else
 	tx_flush_nsamples = 0;
 
+    // arbitrary chosen timeout value: 1/25 of a second
+    unsigned int idle_carrier_usec = (1000000/25);
+
+    int block_input = tx_interactive && !txcarrier;
+#ifdef HAVE_ALARM
+    if ( block_input )
+        signal(SIGALRM, tx_stop_transmit_sighandler);
+    
     // one-shot
     struct itimerval itv = {
 	{0, 0},						// it_interval
@@ -149,13 +157,12 @@ static void fsk_transmit_stdin(
 	{0, 0},						// it_interval
 	{0, 0}						// it_value
     };
-
-    // arbitrary chosen timeout value: 1/25 of a second
-    unsigned int idle_carrier_usec = (1000000/25);
-
-    int block_input = tx_interactive && !txcarrier;
-    if ( block_input )
-	signal(SIGALRM, tx_stop_transmit_sighandler);
+#else
+    if ( block_input ) {
+        fprintf(stderr, "E: This build of minimodem was configured without signal support. Enable carrier?\n");
+        exit(1);
+    }
+#endif
 
     // Set up for select() should we need it
     int fd = fileno(stdin);
@@ -193,8 +200,10 @@ static void fsk_transmit_stdin(
 	    idle = 1;
 
 	// Cause any running timer to immediately trigger
+#ifdef HAVE_ALARM
 	if ( block_input )
 	    setitimer(ITIMER_REAL, &itv_zero, NULL);
+#endif
 
 	if( !idle )
 	{
@@ -236,13 +245,17 @@ static void fsk_transmit_stdin(
 		    idle_carrier_usec * sample_rate / 1000000);
 	}
 
+#ifdef HAVE_ALARM
 	if ( block_input )
 	    setitimer(ITIMER_REAL, &itv, NULL);
+#endif
     }
+#ifdef HAVE_ALARM
     if ( block_input ) {
 	setitimer(ITIMER_REAL, &itv_zero, NULL);
 	signal(SIGALRM, SIG_DFL);
     }
+#endif
     if ( !tx_transmitting )
 	return;
 
@@ -305,6 +318,7 @@ generate_test_tones( simpleaudio *sa_out, unsigned int duration_sec )
 static int
 benchmarks()
 {
+#if USE_BENCHMARKS
     fprintf(stdout, "minimodem %s benchmarks\n", VERSION);
 
     int ret;
@@ -362,6 +376,7 @@ benchmarks()
 
 
     return 1;
+#endif
 }
 
 
@@ -624,7 +639,9 @@ main( int argc, char*argv[] )
 	    { "lut",		1, 0, MINIMODEM_OPT_LUT },
 	    { "float-samples",	0, 0, MINIMODEM_OPT_FLOAT_SAMPLES },
 	    { "rx-one",		0, 0, MINIMODEM_OPT_RX_ONE },
+#if USE_BENCHMARKS
 	    { "benchmarks",	0, 0, MINIMODEM_OPT_BENCHMARKS },
+#endif
 	    { "binary-output",	0, 0, MINIMODEM_OPT_BINARY_OUTPUT },
 	    { "binary-raw",	1, 0, MINIMODEM_OPT_BINARY_RAW },
 	    { "print-filter",	0, 0, MINIMODEM_OPT_PRINT_FILTER },

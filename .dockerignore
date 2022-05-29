@@ -1,0 +1,11 @@
+.dockerignore
+Dockerfile
+*/*.o
+./configure
+*/Makefile
+Makefile
+src/minimodem
+/.cache
+/config.h
+/config.log
+/config.status

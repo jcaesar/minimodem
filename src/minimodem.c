@@ -333,8 +333,8 @@ static int benchmarks() {
   generate_test_tones(sa_out, 10);
   simpleaudio_close(sa_out);
 
-  return 1;
 #endif
+  return 1;
 }
 
 static int rx_stop = 0;
@@ -467,6 +467,7 @@ int main(int argc, char *argv[]) {
   int invert_start_stop = 0;
   int autodetect_shift;
   char *filename = NULL;
+  int stdio_mode = 0;
 
   float carrier_autodetect_threshold = 0.0;
 
@@ -626,10 +627,9 @@ int main(int argc, char *argv[]) {
       filename = optarg;
       break;
     case 'O':
+      stdio_mode = 1;
 #if USE_STDIO
       sa_backend = SA_BACKEND_STDIO;
-      // Apparently the receiver wants floats, so I'mma just output floats
-      sample_format = SA_SAMPLE_FORMAT_FLOAT;
 #else
       fprintf(
           stderr,
@@ -770,7 +770,7 @@ int main(int argc, char *argv[]) {
                     "sndfile,\nE:   so the --file flag is not supported.\n");
     exit(1);
 #endif
-  } else {
+  } else if (!stdio_mode) {
 #ifdef _MINIMODEM_NO_SYSTEM_AUDIO
     fprintf(stderr,
             "E: this build of minimodem was configured without system audio "

@@ -40,6 +40,7 @@ worker.postMessage({
     "--rx", "--tx-carrier", "--stdio", "--float-samples",
     "--samplerate=" + context.sampleRate, "30",
   ],
+  mode: "read",
   buffer
 });
 worker.onmessage = function(e) {

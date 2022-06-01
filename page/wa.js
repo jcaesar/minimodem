@@ -1,7 +1,8 @@
+let mode;
 let instance;
 let argv;
 let shared_buffer;
-let stdin_buffer = new Uint8Array(0);
+let stdin_buffer;
 let shared_int = 0;
 
 function memory() {
@@ -45,7 +46,7 @@ const importObject = {
     },
     fd_close: (a) => { throw (`fd_close: ${a} ${b}`); },
     fd_fdstat_get: (a, b) => {
-      if (a == 1) {
+      if (a == 1 && mode == "read") {
         write(b, [2, 158, 1, 0, 255, 127, 0, 0, 209, 0, 32, 8, ...new Uint8Array(12)]);
         return 0;
       }
@@ -55,7 +56,7 @@ const importObject = {
     fd_read: (a, b, c, d) => {
       if (a != 0)
         return -1;
-      if (stdin_buffer.length == 0) {
+      if (stdin_buffer.length == 0 && shared_buffer !== undefined) {
         let aa = new Int32Array(shared_buffer);
         Atomics.wait(aa, 2048, shared_int);
         shared_int = Atomics.load(aa, 2048);
@@ -82,13 +83,33 @@ const importObject = {
       }
       write(d, itom(buf.length));
       let text = new TextDecoder().decode(buf);
+      if (a == 1 && mode == "write") {
+        postMessage({ data: buf, fd: a });
+        return 0;
+      }
       if (a == 1 || a == 2) {
         postMessage({ text, fd: a });
         return 0;
       }
       return -1;
     },
-    poll_oneoff: (a, b, c, d) => { throw (`poll_oneoff: ${a} ${b} ${c} ${d}`); },
+    poll_oneoff: (a, b, c, d) => {
+      let dw = 0;
+      for (let i = 0; i < c; i++) {
+        let ud = read(a + i * 48 + 0, 8);
+        let typ = read(a + i * 48 + 8, 1);
+        let fd = mtoi(read(a + i * 48 + 16, 4));
+        if (typ == 1 && fd == 0) {
+          write(b + dw * 32 + 0, ud);
+          write(b + dw * 32 + 8, [0, 0]);
+          write(b + dw * 32 + 10, [typ]);
+          write(b + dw * 32 + 16, [...itom(stdin_buffer.length), 0, 0, 0, 0]);
+          write(b + dw * 32 + 24, [stdin_buffer.length == 0 ? 1 : 0, 0]);
+          dw += 1;        
+        }
+      }
+      write(d, itom(dw));
+    },
     proc_exit: (a) => {
       postMessage({ exit: a });
       throw "proc_exit";
@@ -100,10 +121,16 @@ postMessage({ state: "loading" });
 addEventListener('message', function(e) {
   if ('buffer' in e.data)
     shared_buffer = e.data.buffer;
+  if ('mode' in e.data)
+    mode = e.data.mode;
   if ('cmd' in e.data) {
-    argv = e.data.cmd.map(x => new TextEncoder("utf-8").encode(x));
+    argv = e.data.cmd.map(x => new TextEncoder().encode(x));
     WebAssembly.instantiateStreaming(fetch('minimodem.wasm'), importObject)
       .then(o => {
+        if ('input' in e.data)
+          stdin_buffer = new TextEncoder().encode(e.data.input);
+        else
+          stdin_buffer = new Uint8Array(0);
         instance = o.instance;
         postMessage({ state: "run" });
         try {

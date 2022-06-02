@@ -1,7 +1,7 @@
-// ensure HTTPS
 if (location.protocol === 'http:') throw location.protocol = 'https:';
+if (!location.search) throw location.search = "?--confidence=25 50";
+let args = decodeURI(location.search).replace(/^\?/, '').split(' ');
 
-// notify if the browser doesn't support Atomics.wait()
 if (!self.Atomics || !self.Atomics.wait)
   throw alert("Browser needs atomics support");
 
@@ -28,6 +28,10 @@ navigator.getUserMedia(
       let aa = new Int32Array(buffer);
       Atomics.add(aa, 2048, 1);
       Atomics.notify(aa, 2048);
+      // We don't wait for feedback that the sample has actually been processed. 
+      // So we might drop samples.
+      // But we have to drop samples somewhere if processing lags behind.
+      // Here is easiest.
     };
     microphone.connect(processor);
   },
@@ -38,7 +42,7 @@ var worker = new Worker('/wa.js');
 worker.postMessage({
   cmd: ["minicom",
     "--rx", "--tx-carrier", "--stdio", "--float-samples",
-    "--samplerate=" + context.sampleRate, "30",
+    "--samplerate=" + context.sampleRate, ...args
   ],
   mode: "read",
   buffer

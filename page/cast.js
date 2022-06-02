@@ -1,3 +1,7 @@
+if (location.protocol === 'http:') throw location.protocol = 'https:';
+if (!location.search) throw location.search = "?--confidence=25 50";
+let args = decodeURI(location.search).replace(/^\?/, '').split(' ');
+
 var samples = new ArrayBuffer(0);
 var context = new AudioContext();
 var source = context.createBufferSource();
@@ -48,7 +52,7 @@ document.getElementById("trigger").addEventListener("click", e => {
   worker.postMessage({
     cmd: ["minicom",
       "--tx", "--tx-carrier", "--stdio", "--float-samples",
-      "--samplerate=" + context.sampleRate, "30",
+      "--samplerate=" + context.sampleRate, ...args
     ],
     mode: "write",
     input: document.getElementById('input').value,

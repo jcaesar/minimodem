@@ -62,7 +62,7 @@ worker.onmessage = function(e) {
         lf = lf == -1 ? print.length : lf;
         let line = print.substr(0, lf);
         print = print.substr(lf);
-        let pre = document.createElement("tt");
+        let pre = document.createElement("pre");
         pre.textContent = line;
         if (e.data.fd == 2)
           pre.style = 'color: red;';

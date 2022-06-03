@@ -27,8 +27,6 @@ worker.onmessage = function(e) {
     set.set(data, samples.byteLength);
     samples = new_samples;
   }
-  if ('state' in e.data)
-    document.getElementById('state').textContent = `Status: ${e.data.state}`;
   if ('text' in e.data) {
     const output = document.getElementById('output');
     let print = e.data.text;
@@ -41,7 +39,7 @@ worker.onmessage = function(e) {
         lf = lf == -1 ? print.length : lf;
         let line = print.substr(0, lf);
         print = print.substr(lf);
-        let pre = document.createElement("tt");
+        let pre = document.createElement("pre");
         pre.textContent = line;
         output.appendChild(pre);
       }

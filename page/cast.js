@@ -1,6 +1,4 @@
 if (location.protocol === 'http:') throw location.protocol = 'https:';
-if (!location.search) throw location.search = "?--confidence=25 50";
-let args = decodeURI(location.search).replace(/^\?/, '').split(' ');
 
 var samples = new ArrayBuffer(0);
 var context = new AudioContext();
@@ -15,7 +13,7 @@ script.onaudioprocess = function(audioProcessingEvent) {
 };
 source.connect(script);
 script.connect(context.destination);
-source.start();
+var started = false;
 
 var worker = new Worker('/wa.js');
 worker.onmessage = function(e) {
@@ -47,6 +45,11 @@ worker.onmessage = function(e) {
   }
 };
 document.getElementById("trigger").addEventListener("click", e => {
+  if (!started) {
+    started = true;
+    source.start();
+  }
+  let args = document.getElementById('args').value.split(' ');
   worker.postMessage({
     cmd: ["minicom",
       "--tx", "--tx-carrier", "--stdio", "--float-samples",

@@ -15,7 +15,7 @@ source.connect(script);
 script.connect(context.destination);
 var started = false;
 
-var worker = new Worker('/wa.js');
+var worker = new Worker('wa.js');
 worker.onmessage = function(e) {
   if ('data' in e.data) {
     let data = e.data.data;
@@ -51,7 +51,7 @@ document.getElementById("trigger").addEventListener("click", e => {
   }
   let args = document.getElementById('args').value.split(' ');
   worker.postMessage({
-    cmd: ["minicom",
+    cmd: ["mimo",
       "--tx", "--tx-carrier", "--stdio", "--float-samples",
       "--samplerate=" + context.sampleRate, ...args
     ],

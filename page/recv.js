@@ -41,10 +41,10 @@ document.getElementById("trigger").addEventListener("click", e => {
   
   if (worker)
     worker.terminate();
-  worker = new Worker('/wa.js');
+  worker = new Worker('wa.js');
   let args = document.getElementById('args').value.split(' ');
   worker.postMessage({
-    cmd: ["minicom",
+    cmd: ["mimo",
       "--rx", "--tx-carrier", "--stdio", "--float-samples",
       "--samplerate=" + context.sampleRate, ...args
     ],
